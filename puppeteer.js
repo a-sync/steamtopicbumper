@@ -16,14 +16,16 @@ async function bump() {
         ignoreHTTPSErrors: true
     });
 
-    let closing = null;
-    const shutDown = async (reason) => {
-        if (null !== closing) return closing;
+    let closing = false;
+    let closePromise;
+    const shutDown = (reason) => {
+        if (closing) return closePromise;
+        closing = true;
         console.warn(reason + ' @ ' + String(new Date()));
-        closing = browser.close();
-        await closing;
-        console.timeEnd('connection');
-        return closing;
+        closePromise = browser.close().then(() => {
+            console.timeEnd('connection');
+        });
+        return closePromise;
     }
 
     browser.on('targetdestroyed', target => {
