@@ -1,11 +1,11 @@
 const puppeteer = require('puppeteer');
 const fetch = require('node-fetch');
 
-const LOGIN_URL = 'https://steamcommunity.com/login/home/?goto=app%2F107410%2Fdiscussions%2F10%2F1634166237664079458%2F';
-const LOGIN = '10mddev';
-const PASSW = 'policethatmoostash';
-const IDURL = 'https://steamcommunity.com/id/10mdrealism'
-const RESTMAIL = '10mdrealismauthcode'; // @restmail.net (forward steam auth code emails here)
+const LOGIN_URL = process.env.LOGIN_URL;
+const LOGIN = process.env.LOGIN;
+const PASSW = process.env.PASSW;
+const IDURL = process.env.IDURL;
+const RESTMAIL = process.env.RESTMAIL; // @restmail.net (forward steam auth code emails here)
 
 (async() => {
 
@@ -18,7 +18,7 @@ const browser = await puppeteer.launch({
         '--disable-accelerated-2d-canvas',
         '--disable-gpu'
     ],
-    userDataDir: __dirname + '/user_data'
+    userDataDir: '/mnt/user_data'
 });
 
 let shutdownState = 0;
