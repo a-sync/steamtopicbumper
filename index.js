@@ -8,13 +8,17 @@ const IDURL = 'https://steamcommunity.com/id/10mdrealism'
 const RESTMAIL = '10mdrealismauthcode'; // @restmail.net (forward steam auth code emails here)
 
 (async() => {
+
 const browser = await puppeteer.launch({
-    headless: false, // DEBUG
+    headless: true,
     ignoreHTTPSErrors: true,
     args:[
-        '--window-size=600,800'
+        //'--window-size=600,800',
+        '--disable-dev-shm-usage',
+        '--disable-accelerated-2d-canvas',
+        '--disable-gpu'
     ],
-    userDataDir: './user_data'
+    userDataDir: __dirname + '/user_data'
 });
 
 let shutdownState = 0;
@@ -32,7 +36,8 @@ browser.on('targetdestroyed', target => {
 });
 
 const page = await browser.newPage();
-await page.setViewport({width: 600, height: 800});
+await page.setUserAgent('Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/77.0.3865.90 Safari/537.36');
+//await page.setViewport({width: 600, height: 800});
 
 // Log in
 await page.goto(LOGIN_URL, {waitUntil: 'load'});
@@ -130,18 +135,18 @@ function waitForNewMail(id) {
         const check = () => {
             loadLastFromInbox(id).then(res => {
                 if (!(res instanceof Error) && res.age / 1000 < 30) {
-                    resolve(res.text);
+                    return resolve(res.text);
                 } else {
                     i++;
-                    if (i < 8) {
-                        setTimeout(check, 4000);
+                    if (i < 10) {
+                        setTimeout(check, 3000);
                     } else {
-                        reject(new Error('No new message received within the time limit.'));
+                        return reject(new Error('No new message received within the time limit.'));
                     }
                 }
             });
         };
 
-        check();
+        setTimeout(check, 3000);
     });
 }
