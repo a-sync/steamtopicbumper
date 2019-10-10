@@ -9,6 +9,7 @@ const RESTMAIL = process.env.RESTMAIL; // @restmail.net (forward steam auth code
 const TOKEN = process.env.TOKEN;
 
 async function bump() {
+    console.time('connection');
     const browser = await puppeteer.connect({
         browserWSEndpoint: 'wss://chrome.browserless.io/?token='+TOKEN
         +'&--disable-dev-shm-usage=true&--user-data-dir=~/bumper-'+LOGIN,
@@ -19,8 +20,9 @@ async function bump() {
     const shutDown = async (reason) => {
         if (shutdownState != 0) return;
         shutdownState = 1;
-        console.warn(reason);
+        console.warn(reason + ' @ ' + String(new Date()));
         await browser.close();
+        console.timeEnd('connection');
     }
 
     browser.on('targetdestroyed', target => {
@@ -29,6 +31,7 @@ async function bump() {
         }
     });
 
+    console.time('login');
     const page = await browser.newPage();
     await page.setUserAgent('Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/77.0.3865.90 Safari/537.36');
     //await page.setViewport({width: 600, height: 800});
@@ -44,9 +47,11 @@ async function bump() {
         ]),
         page.waitForSelector('#authcode', {visible:true}).catch(()=>{})
     ]);
+    console.timeEnd('login');
 
     // Deal with Steam Guard
     if (await page.$('#authcode')) {
+        console.time('authcode');
         try {
             const mailBody = await waitForNewMail(RESTMAIL);
             const authCode = mailBody.split(LOGIN+':\n\n')[1].split('\n')[0];
@@ -66,9 +71,11 @@ async function bump() {
             console.error('Failed to retrieve Steam Guard code', error.message);
             shutDown('Login failed!');
         }
+        console.timeEnd('authcode');
     }
 
     // Delete previous comment
+    console.time('delete_reply');
     try {
         const delCommand = await page.$$eval(`.commentthread_comment_avatar a[href="${IDURL}"]`, links => {
             if (links.length < 1) return null;
@@ -87,8 +94,10 @@ async function bump() {
     } catch (error) {
         console.warn('Del command failed.', error.message);
     }
+    console.timeEnd('delete_reply');
 
     // Add new reply
+    console.time('add_reply');
     try {
         await page.type('.forumtopic_reply_entry textarea', 'bump', {delay:50});
         await page.waitForSelector('.commentthread_entry_submitlink', {visible:true});
@@ -98,12 +107,13 @@ async function bump() {
     } catch(error) {
         console.warn('Text submission failed.', error.message);
     }
+    console.timeEnd('add_reply');
 
     shutDown('Done.');
 }
 
 async function loadLastFromInbox(id) {
-    console.debug(`Checking ${id}@restmail.net`);
+    console.debug(`Checking ${id}@restmail.net @ ` + String(new Date()));
 
     const res = await fetch('http://restmail.net/mail/'+id);
     const resJson = await res.json();
