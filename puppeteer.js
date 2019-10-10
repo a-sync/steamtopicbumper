@@ -16,13 +16,14 @@ async function bump() {
         ignoreHTTPSErrors: true
     });
 
-    let shutdownState = 0;
+    let closing = null;
     const shutDown = async (reason) => {
-        if (shutdownState != 0) return;
-        shutdownState = 1;
+        if (null !== closing) return closing;
         console.warn(reason + ' @ ' + String(new Date()));
-        await browser.close();
+        closing = browser.close();
+        await closing;
         console.timeEnd('connection');
+        return closing;
     }
 
     browser.on('targetdestroyed', target => {
@@ -37,23 +38,28 @@ async function bump() {
     //await page.setViewport({width: 600, height: 800});
 
     // Log in
-    await page.goto(LOGIN_URL, {waitUntil: 'load'});
-    await page.type('#steamAccountName', LOGIN);
-    await page.type('#steamPassword', PASSW);
-    await Promise.race([
-        Promise.all([
-            page.waitForNavigation({waitUntil: 'load'}).catch(()=>{}),
-            page.click('#SteamLogin')
-        ]),
-        page.waitForSelector('#authcode', {visible:true}).catch(()=>{})
-    ]);
+    try {
+        await page.goto(LOGIN_URL, {waitUntil: 'load'});
+        await page.type('#steamAccountName', LOGIN);
+        await page.type('#steamPassword', PASSW);
+        await Promise.race([
+            Promise.all([
+                page.waitForNavigation({waitUntil: 'load'}).catch(()=>{}),
+                page.click('#SteamLogin')
+            ]),
+            page.waitForSelector('#authcode', {visible:true}).catch(()=>{})
+        ]);
+    } catch (error) {
+        console.error(error.message);
+        return shutDown('Login failed!');
+    }
     console.timeEnd('login');
 
     // Deal with Steam Guard
     if (await page.$('#authcode')) {
         console.time('authcode');
         try {
-            const mailBody = await waitForNewMail(RESTMAIL);
+            const mailBody = await waitForNewMail();
             const authCode = mailBody.split(LOGIN+':\n\n')[1].split('\n')[0];
 
             await page.type('#authcode', authCode);
@@ -68,8 +74,8 @@ async function bump() {
                 page.click('#auth_buttonset_success a[data-modalstate="complete"]')
             ]);
         } catch(error) {
-            console.error('Failed to retrieve Steam Guard code', error.message);
-            shutDown('Login failed!');
+            console.error(error.message);
+            return shutDown('Login with authcode failed!');
         }
         console.timeEnd('authcode');
     }
@@ -109,13 +115,12 @@ async function bump() {
     }
     console.timeEnd('add_reply');
 
-    shutDown('Done.');
+    return shutDown('Done.');
 }
 
-async function loadLastFromInbox(id) {
-    console.debug(`Checking ${id}@restmail.net @ ` + String(new Date()));
-
-    const res = await fetch('http://restmail.net/mail/'+id);
+async function loadLastFromInbox() {
+    //console.debug(`Checking ${RESTMAIL}@restmail.net @ ` + String(new Date()));
+    const res = await fetch('http://restmail.net/mail/'+RESTMAIL);
     const resJson = await res.json();
 
     let re;
@@ -132,12 +137,12 @@ async function loadLastFromInbox(id) {
     return re;
 }
 
-function waitForNewMail(id) {
+function waitForNewMail() {
     return new Promise((resolve, reject) => {
         let i = 0;
 
         const check = () => {
-            loadLastFromInbox(id).then(res => {
+            loadLastFromInbox().then(res => {
                 if (!(res instanceof Error) && res.age / 1000 < 30) {
                     return resolve(res.text);
                 } else {
@@ -155,4 +160,9 @@ function waitForNewMail(id) {
     });
 }
 
+function clearInbox() {
+    return fetch('http://restmail.net/mail/'+RESTMAIL, {method:'DELETE'});
+}
+
 module.exports.bump = bump;
+module.exports.clearInbox = clearInbox;
