@@ -74,9 +74,10 @@ if (await page.$('#authcode')) {
     }
 }
 
-// Delete previous comment
-try {
-    const delCommand = await page.$$eval(`.commentthread_comment_avatar a[href="${IDURL}"]`, links => {
+const bump = async () => {
+    // Delete previous comment
+    try {
+        const delCommand = await page.$$eval(`.commentthread_comment_avatar a[href="${IDURL}"]`, links => {
         if (links.length < 1) return null;
         const lastLink = links.pop();
         const delButton = lastLink.parentNode.parentNode.querySelector('a.forum_comment_action.delete');
@@ -101,11 +102,13 @@ try {
     await page.waitFor(500);
     await page.click('button[id*="_submit"]', {delay:50});
     await page.waitForSelector('.commentthread_entry_submitlink', {hidden:true});
-} catch(error) {
-    console.warn('Text submission failed.', error.message);
-}
+    } catch(error) {
+        console.warn('Text submission failed.', error.message);
+    }
+};
 
-shutDown('EOF');
+setInterval(bump, 1000 * 60 * 60);
+
 })();
 
 async function loadLastFromInbox(id) {
