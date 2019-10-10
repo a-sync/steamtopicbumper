@@ -9,16 +9,9 @@ const RESTMAIL = process.env.RESTMAIL; // @restmail.net (forward steam auth code
 
 (async() => {
 
-const browser = await puppeteer.launch({
-    headless: true,
-    ignoreHTTPSErrors: true,
-    args:[
-        //'--window-size=600,800',
-        '--disable-dev-shm-usage',
-        '--disable-accelerated-2d-canvas',
-        '--disable-gpu'
-    ],
-    userDataDir: '/mnt/user_data'
+const browser = await puppeteer.connect({
+    browserWSEndpoint: 'wss://chrome.browserless.io/?--disable-dev-shm-usage=true&--user-data-dir=~/bumper',
+    ignoreHTTPSErrors: true
 });
 
 let shutdownState = 0;
@@ -74,10 +67,9 @@ if (await page.$('#authcode')) {
     }
 }
 
-const bump = async () => {
-    // Delete previous comment
-    try {
-        const delCommand = await page.$$eval(`.commentthread_comment_avatar a[href="${IDURL}"]`, links => {
+// Delete previous comment
+try {
+    const delCommand = await page.$$eval(`.commentthread_comment_avatar a[href="${IDURL}"]`, links => {
         if (links.length < 1) return null;
         const lastLink = links.pop();
         const delButton = lastLink.parentNode.parentNode.querySelector('a.forum_comment_action.delete');
@@ -102,12 +94,11 @@ try {
     await page.waitFor(500);
     await page.click('button[id*="_submit"]', {delay:50});
     await page.waitForSelector('.commentthread_entry_submitlink', {hidden:true});
-    } catch(error) {
-        console.warn('Text submission failed.', error.message);
-    }
-};
+} catch(error) {
+    console.warn('Text submission failed.', error.message);
+}
 
-setInterval(bump, 1000 * 60 * 60);
+shutDown('Done.');
 
 })();
 
