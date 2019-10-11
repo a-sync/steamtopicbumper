@@ -1,7 +1,7 @@
 # Steam topic bumper
 
 ## Requirements
- * sane install of node 8 or newer
+ * sane install of nodejs 8 or newer
  * steam user account
     * non [limited](https://support.steampowered.com/kb_article.php?ref=3330-IAGK-7663)
     * has a custom URL setup
