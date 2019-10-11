@@ -4,4 +4,4 @@ logs
 npm-debug.log*
 #node_modules/
 
-user_data/
+userData-*/

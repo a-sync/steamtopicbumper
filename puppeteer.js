@@ -15,6 +15,15 @@ async function bump() {
         +'&--disable-dev-shm-usage=true&--user-data-dir=~/bumper-'+LOGIN,
         ignoreHTTPSErrors: true
     });
+    /*const browser = await puppeteer.launch({
+        args:[
+            //'--window-size=600,800',
+            '--disable-dev-shm-usage'
+        ],
+        userDataDir: __dirname + '/userData-'+LOGIN,
+        ignoreHTTPSErrors: true,
+        headless: true
+    });*/
 
     let closing = false;
     let closePromise;
