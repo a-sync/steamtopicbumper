@@ -45,6 +45,7 @@ async function bump() {
 
     console.time('login');
     const page = await browser.newPage();
+    page.setDefaultTimeout(10000);
     await page.setUserAgent('Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/77.0.3865.90 Safari/537.36');
     //await page.setViewport({width: 600, height: 800});
 
@@ -72,16 +73,11 @@ async function bump() {
         try {
             const mailBody = await waitForNewMail();
             const authCode = mailBody.split(LOGIN+':\n\n')[1].split('\n')[0];
-
             await page.type('#authcode', authCode);
-
+            await page.click('#auth_buttonset_entercode div[data-modalstate="submit"]');
+            await page.waitForSelector('#auth_buttonset_success a[data-modalstate="complete"]', {visible:true});
             await Promise.all([
-                page.waitForSelector('#auth_buttonset_success a[data-modalstate="complete"]', {visible:true}),
-                page.click('#auth_buttonset_entercode div[data-modalstate="submit"]')
-            ]);
-
-            await Promise.all([
-                page.waitForNavigation({waitUntil: 'load'}).catch(()=>{}),
+                page.waitForNavigation({waitUntil: 'load'}),
                 page.click('#auth_buttonset_success a[data-modalstate="complete"]')
             ]);
         } catch(error) {
@@ -104,7 +100,7 @@ async function bump() {
         //console.debug(delCommand);
         if (delCommand) {
             await page.evaluate(String(delCommand.trim().substr(11)));
-            await page.waitForSelector('div.newmodal', {visible:true});
+            await page.waitForSelector('div.newmodal .btn_green_white_innerfade', {visible:true});
             await page.click('div.newmodal .btn_green_white_innerfade');
             await page.waitForSelector('div.newmodal', {hidden:true});
         }
@@ -117,9 +113,9 @@ async function bump() {
     console.time('add_reply');
     try {
         await page.type('.forumtopic_reply_entry textarea', 'bump', {delay:50});
-        await page.waitForSelector('.commentthread_entry_submitlink', {visible:true});
+        await page.waitForSelector('.commentthread_entry_submitlink button[id*="_submit"]', {visible:true});
         await page.waitFor(500);
-        await page.click('button[id*="_submit"]', {delay:50});
+        await page.click('.commentthread_entry_submitlink button[id*="_submit"]', {delay:50});
         await page.waitForSelector('.commentthread_entry_submitlink', {hidden:true});
     } catch(error) {
         console.warn('Text submission failed.', error.message);
