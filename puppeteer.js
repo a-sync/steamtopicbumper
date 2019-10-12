@@ -30,8 +30,10 @@ async function bump() {
     const shutDown = (reason) => {
         if (closing) return closePromise;
         closing = true;
-        console.warn(reason + ' @ ' + String(new Date()));
+        if (reason) console.warn(reason);
         closePromise = browser.close().then(() => {
+            console.timeEnd('connection');
+        }).catch(error => {
             console.timeEnd('connection');
         });
         return closePromise;
@@ -63,6 +65,7 @@ async function bump() {
         ]);
     } catch (error) {
         console.error(error.message);
+        console.timeEnd('login');
         return shutDown('Login failed!');
     }
     console.timeEnd('login');
@@ -82,6 +85,7 @@ async function bump() {
             ]);
         } catch(error) {
             console.error(error.message);
+            console.timeEnd('authcode');
             return shutDown('Login with authcode failed!');
         }
         console.timeEnd('authcode');
@@ -122,7 +126,7 @@ async function bump() {
     }
     console.timeEnd('add_reply');
 
-    return shutDown('Done.');
+    return shutDown();
 }
 
 async function loadLastFromInbox() {
