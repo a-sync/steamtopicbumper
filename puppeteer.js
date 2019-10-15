@@ -119,10 +119,16 @@ async function bump() {
         await page.type('.forumtopic_reply_entry textarea', 'bump', {delay:50});
         await page.waitForSelector('.commentthread_entry_submitlink button[id*="_submit"]', {visible:true});
         await page.waitFor(500);
-        await page.click('.commentthread_entry_submitlink button[id*="_submit"]', {delay:50});
-        await page.waitForSelector('.commentthread_entry_submitlink', {hidden:true});
+        try {
+            await page.click('.commentthread_entry_submitlink button[id*="_submit"]', {delay:50});
+            await page.waitForSelector('.commentthread_entry_submitlink', {hidden:true, timeout:5000});
+        } catch(error) {
+            console.warn('Submit failed. Retrying...', error.message);
+            await page.click('.commentthread_entry_submitlink button[id*="_submit"]', {delay:50});
+            await page.waitForSelector('.commentthread_entry_submitlink', {hidden:true, timeout:5000});
+        }
     } catch(error) {
-        console.warn('Text submission failed.', error.message);
+        console.warn('Reply submission failed.', error.message);
     }
     console.timeEnd('add_reply');
 
