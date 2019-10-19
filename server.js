@@ -1,4 +1,4 @@
-const {bump, clearInbox} = require('./puppeteer.js');
+const {bump} = require('./puppeteer.js');
 
 console.log('Starting bumper...');
 let counter = 0;
@@ -8,7 +8,6 @@ async function run() {
     console.log('Starting bump #' + c + ' @ ' + String(new Date()));
     try {
         await bump();
-        clearInbox();
     } catch (error) {
         console.error(error);
     }

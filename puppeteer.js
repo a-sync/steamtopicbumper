@@ -39,98 +39,103 @@ async function bump() {
         return closePromise;
     }
 
-    browser.on('targetdestroyed', target => {
-        if (['browser', 'page', 'other'].includes(target.type())) {
-            shutDown('DESTROYED! GOING DOWN!');
-        }
-    });
-
-    console.time('login');
-    const page = await browser.newPage();
-    page.setDefaultTimeout(10000);
-    await page.setUserAgent('Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/77.0.3865.90 Safari/537.36');
-    //await page.setViewport({width: 600, height: 800});
-
-    // Log in
     try {
-        await page.goto(LOGIN_URL, {waitUntil: 'load'});
-        await page.type('#steamAccountName', LOGIN);
-        await page.type('#steamPassword', PASSW);
-        await Promise.race([
-            Promise.all([
-                page.waitForNavigation({waitUntil: 'load'}).catch(()=>{}),
-                page.click('#SteamLogin')
-            ]),
-            page.waitForSelector('#authcode', {visible:true}).catch(()=>{})
-        ]);
-    } catch (error) {
-        console.error(error.message);
-        console.timeEnd('login');
-        return shutDown('Login failed!');
-    }
-    console.timeEnd('login');
-
-    // Deal with Steam Guard
-    if (await page.$('#authcode')) {
-        console.time('authcode');
-        try {
-            const mailBody = await waitForNewMail();
-            const authCode = mailBody.split(LOGIN+':\n\n')[1].split('\n')[0];
-            await page.type('#authcode', authCode);
-            await page.click('#auth_buttonset_entercode div[data-modalstate="submit"]');
-            await page.waitForSelector('#auth_buttonset_success a[data-modalstate="complete"]', {visible:true});
-            await Promise.all([
-                page.waitForNavigation({waitUntil: 'load'}),
-                page.click('#auth_buttonset_success a[data-modalstate="complete"]')
-            ]);
-        } catch(error) {
-            console.error(error.message);
-            console.timeEnd('authcode');
-            return shutDown('Login with authcode failed!');
-        }
-        console.timeEnd('authcode');
-    }
-
-    // Delete previous comment
-    console.time('delete_reply');
-    try {
-        const delCommand = await page.$$eval(`.commentthread_comment_avatar a[href="${IDURL}"]`, links => {
-            if (links.length < 1) return null;
-            const lastLink = links.pop();
-            const delButton = lastLink.parentNode.parentNode.querySelector('a.forum_comment_action.delete');
-            return delButton.getAttribute('href');
+        browser.on('targetdestroyed', target => {
+            if (['browser', 'page', 'other'].includes(target.type())) {
+                shutDown('DESTROYED! GOING DOWN!');
+            }
         });
 
-        //console.debug(delCommand);
-        if (delCommand) {
-            await page.evaluate(String(delCommand.trim().substr(11)));
-            await page.waitForSelector('div.newmodal .btn_green_white_innerfade', {visible:true});
-            await page.click('div.newmodal .btn_green_white_innerfade');
-            await page.waitForSelector('div.newmodal', {hidden:true});
-        }
-    } catch (error) {
-        console.warn('Del command failed.', error.message);
-    }
-    console.timeEnd('delete_reply');
+        console.time('login');
+        const page = await browser.newPage();
+        page.setDefaultTimeout(10000);
+        await page.setUserAgent('Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/77.0.3865.90 Safari/537.36');
+        //await page.setViewport({width: 600, height: 800});
 
-    // Add new reply
-    console.time('add_reply');
-    try {
-        await page.type('.forumtopic_reply_entry textarea', 'bump', {delay:50});
-        await page.waitForSelector('.commentthread_entry_submitlink button[id*="_submit"]', {visible:true});
-        await page.waitFor(500);
+        // Log in
         try {
-            await page.click('.commentthread_entry_submitlink button[id*="_submit"]', {delay:50});
-            await page.waitForSelector('.commentthread_entry_submitlink', {hidden:true, timeout:5000});
-        } catch(error) {
-            console.warn('Submit failed. Retrying...', error.message);
-            await page.click('.commentthread_entry_submitlink button[id*="_submit"]', {delay:50});
-            await page.waitForSelector('.commentthread_entry_submitlink', {hidden:true, timeout:5000});
+            await page.goto(LOGIN_URL, {waitUntil: 'load'});
+            await page.type('#steamAccountName', LOGIN);
+            await page.type('#steamPassword', PASSW);
+            await Promise.race([
+                Promise.all([
+                    page.waitForNavigation({waitUntil: 'load'}).catch(()=>{}),
+                    page.click('#SteamLogin')
+                ]),
+                page.waitForSelector('#authcode', {visible:true}).catch(()=>{})
+            ]);
+        } catch (error) {
+            console.error(error.message);
+            console.timeEnd('login');
+            return shutDown('Login failed!');
         }
-    } catch(error) {
-        console.warn('Reply submission failed.', error.message);
+        console.timeEnd('login');
+
+        // Deal with Steam Guard
+        if (await page.$('#authcode')) {
+            console.time('authcode');
+            try {
+                const mailBody = await waitForNewMail();
+                clearInbox();
+                const authCode = mailBody.split(LOGIN+':\n\n')[1].split('\n')[0];
+                await page.type('#authcode', authCode);
+                await page.click('#auth_buttonset_entercode div[data-modalstate="submit"]');
+                await page.waitForSelector('#auth_buttonset_success a[data-modalstate="complete"]', {visible:true});
+                await Promise.all([
+                    page.waitForNavigation({waitUntil: 'load'}),
+                    page.click('#auth_buttonset_success a[data-modalstate="complete"]')
+                ]);
+            } catch(error) {
+                console.error(error.message);
+                console.timeEnd('authcode');
+                return shutDown('Login with authcode failed!');
+            }
+            console.timeEnd('authcode');
+        }
+
+        // Delete previous comment
+        console.time('delete_reply');
+        try {
+            const delCommand = await page.$$eval(`.commentthread_comment_avatar a[href="${IDURL}"]`, links => {
+                if (links.length < 1) return null;
+                const lastLink = links.pop();
+                const delButton = lastLink.parentNode.parentNode.querySelector('a.forum_comment_action.delete');
+                return delButton.getAttribute('href');
+            });
+
+            //console.debug(delCommand);
+            if (delCommand) {
+                await page.evaluate(String(delCommand.trim().substr(11)));
+                await page.waitForSelector('div.newmodal .btn_green_white_innerfade', {visible:true});
+                await page.click('div.newmodal .btn_green_white_innerfade');
+                await page.waitForSelector('div.newmodal', {hidden:true});
+            }
+        } catch (error) {
+            console.warn('Del command failed.', error.message);
+        }
+        console.timeEnd('delete_reply');
+
+        // Add new reply
+        console.time('add_reply');
+        try {
+            await page.type('.forumtopic_reply_entry textarea', 'bump', {delay:50});
+            await page.waitForSelector('.commentthread_entry_submitlink button[id*="_submit"]', {visible:true});
+            await page.waitFor(500);
+            try {
+                await page.click('.commentthread_entry_submitlink button[id*="_submit"]', {delay:50});
+                await page.waitForSelector('.commentthread_entry_submitlink', {hidden:true, timeout:5000});
+            } catch(error) {
+                console.warn('Submit failed. Retrying...', error.message);
+                await page.click('.commentthread_entry_submitlink button[id*="_submit"]', {delay:50});
+                await page.waitForSelector('.commentthread_entry_submitlink', {hidden:true, timeout:5000});
+            }
+        } catch(error) {
+            console.warn('Reply submission failed.', error.message);
+        }
+        console.timeEnd('add_reply');
+    } catch (error) {
+        return shutDown(error.message);
     }
-    console.timeEnd('add_reply');
 
     return shutDown();
 }
@@ -182,4 +187,3 @@ function clearInbox() {
 }
 
 module.exports.bump = bump;
-module.exports.clearInbox = clearInbox;
