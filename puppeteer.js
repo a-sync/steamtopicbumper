@@ -93,7 +93,7 @@ async function bump() {
         }
 
         // Add new reply
-        console.time('add_reply');
+        console.time('add_new_reply');
         try {
             await page.type('.forumtopic_reply_entry textarea', 'bump', {delay:50});
             await page.waitForSelector('.commentthread_entry_submitlink button[id*="_submit"]', {visible:true});
@@ -102,13 +102,13 @@ async function bump() {
             await page.waitForSelector('.commentthread_entry_submitlink', {hidden:true});
         } catch (error) {
             console.error(error.message);
-            console.timeEnd('add_reply');
+            console.timeEnd('add_new_reply');
             return shutDown('Reply submission failed.');
         }
-        console.timeEnd('add_reply');
+        console.timeEnd('add_new_reply');
 
-        // Delete previous comment
-        console.time('delete_reply');
+        // Delete previous reply
+        console.time('delete_prev_reply');
         try {
             const delCommand = await page.evaluate(() => {
                 const steamId3 = document.querySelector('.persona a[data-miniprofile]').dataset.miniprofile;
@@ -130,10 +130,10 @@ async function bump() {
             }
         } catch (error) {
             console.error(error.message);
-            console.timeEnd('delete_reply');
+            console.timeEnd('delete_prev_reply');
             return shutDown('Del command failed.');
         }
-        console.timeEnd('delete_reply');
+        console.timeEnd('delete_prev_reply');
     } catch (error) {
         return shutDown(error.message);
     }
@@ -146,18 +146,15 @@ async function loadLastFromInbox() {
     const res = await fetch('http://restmail.net/mail/'+RESTMAIL);
     const resJson = await res.json();
 
-    let re;
     try {
         const {text, date} = resJson.pop();
         const currDate = new Date();
         const mailDate = new Date(date);
         const age = Math.abs(currDate.getTime() - mailDate.getTime());
-        re = {text, age};
+        return {text, age};
     } catch (error) {
-        re = new Error('No messages.');
+        return new Error('No messages.');
     }
-
-    return re;
 }
 
 function waitForNewMail() {
@@ -167,6 +164,7 @@ function waitForNewMail() {
         const check = () => {
             loadLastFromInbox().then(res => {
                 if (!(res instanceof Error) && res.age / 1000 < 30) {
+                    console.log('Found new mail on try nr. ' + String(i+1));
                     return resolve(res.text);
                 } else {
                     i++;
