@@ -113,15 +113,15 @@ async function bump() {
             const delCommand = await page.evaluate(() => {
                 const steamId3 = document.querySelector('.persona a[data-miniprofile]').dataset.miniprofile;
                 const links = document.querySelectorAll(`a.commentthread_author_link[data-miniprofile="${steamId3}"]`);
-                if (links.length < 2) return null;
+                if (links.length < 2) return false;
                 const prevLink = links[links.length - 2];
                 const delButton = prevLink.parentNode.querySelector('a.forum_comment_action.delete');
-                return delButton.getAttribute('href');
+                const delFunctionString = delButton.getAttribute('href').trim().substr(11);
+                Function(delFunctionString)();
+                return true;
             });
 
-            //console.debug(delCommand);
             if (delCommand) {
-                await page.evaluate(String(delCommand.trim().substr(11)));
                 await page.waitForSelector('div.newmodal .btn_green_white_innerfade', {visible:true});
                 await page.click('div.newmodal .btn_green_white_innerfade');
                 await page.waitForSelector('div.newmodal', {hidden:true});
