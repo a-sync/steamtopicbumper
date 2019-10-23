@@ -1,7 +1,7 @@
 const puppeteer = require('puppeteer');
 const fetch = require('node-fetch');
 
-const LOGIN_URL = process.env.LOGIN_URL;
+const LOGIN_URL = process.env.LOGIN_URL + '%3Ftscn%3D18446744073709551615';
 const LOGIN = process.env.LOGIN;
 const PASSW = process.env.PASSW;
 const IDURL = process.env.IDURL;
@@ -93,13 +93,28 @@ async function bump() {
             console.timeEnd('authcode');
         }
 
+        // Add new reply
+        console.time('add_reply');
+        try {
+            await page.type('.forumtopic_reply_entry textarea', 'bump', {delay:50});
+            await page.waitForSelector('.commentthread_entry_submitlink button[id*="_submit"]', {visible:true});
+            await page.waitFor(500);
+            await page.click('.commentthread_entry_submitlink button[id*="_submit"]', {delay:50});
+            await page.waitForSelector('.commentthread_entry_submitlink', {hidden:true});
+        } catch (error) {
+            console.error(error.message);
+            console.timeEnd('add_reply');
+            return shutDown('Reply submission failed.');
+        }
+        console.timeEnd('add_reply');
+
         // Delete previous comment
         console.time('delete_reply');
         try {
             const delCommand = await page.$$eval(`.commentthread_comment_avatar a[href="${IDURL}"]`, links => {
-                if (links.length < 1) return null;
-                const lastLink = links.pop();
-                const delButton = lastLink.parentNode.parentNode.querySelector('a.forum_comment_action.delete');
+                if (links.length < 2) return null;
+                const prevLink = links[links.length - 2];
+                const delButton = prevLink.parentNode.parentNode.querySelector('a.forum_comment_action.delete');
                 return delButton.getAttribute('href');
             });
 
@@ -109,30 +124,15 @@ async function bump() {
                 await page.waitForSelector('div.newmodal .btn_green_white_innerfade', {visible:true});
                 await page.click('div.newmodal .btn_green_white_innerfade');
                 await page.waitForSelector('div.newmodal', {hidden:true});
+            } else {
+                console.warn('Previous reply not found.');
             }
         } catch (error) {
-            console.warn('Del command failed.', error.message);
+            console.error(error.message);
+            console.timeEnd('delete_reply');
+            return shutDown('Del command failed.');
         }
         console.timeEnd('delete_reply');
-
-        // Add new reply
-        console.time('add_reply');
-        try {
-            await page.type('.forumtopic_reply_entry textarea', 'bump', {delay:50});
-            await page.waitForSelector('.commentthread_entry_submitlink button[id*="_submit"]', {visible:true});
-            await page.waitFor(500);
-            try {
-                await page.click('.commentthread_entry_submitlink button[id*="_submit"]', {delay:50});
-                await page.waitForSelector('.commentthread_entry_submitlink', {hidden:true, timeout:5000});
-            } catch(error) {
-                console.warn('Submit failed. Retrying...', error.message);
-                await page.click('.commentthread_entry_submitlink button[id*="_submit"]', {delay:50});
-                await page.waitForSelector('.commentthread_entry_submitlink', {hidden:true, timeout:5000});
-            }
-        } catch(error) {
-            console.warn('Reply submission failed.', error.message);
-        }
-        console.timeEnd('add_reply');
     } catch (error) {
         return shutDown(error.message);
     }
@@ -152,7 +152,7 @@ async function loadLastFromInbox() {
         const mailDate = new Date(date);
         const age = Math.abs(currDate.getTime() - mailDate.getTime());
         re = {text, age};
-    } catch(error) {
+    } catch (error) {
         re = new Error('No messages.');
     }
 
