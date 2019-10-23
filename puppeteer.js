@@ -169,7 +169,7 @@ function waitForNewMail() {
                 } else {
                     i++;
                     if (i < 10) {
-                        setTimeout(check, 3000);
+                        setTimeout(check, 2500);
                     } else {
                         return reject(new Error('No new message received within the time limit.'));
                     }
@@ -177,7 +177,7 @@ function waitForNewMail() {
             });
         };
 
-        setTimeout(check, 3000);
+        setTimeout(check, 5000);
     });
 }
 
