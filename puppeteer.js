@@ -4,7 +4,6 @@ const fetch = require('node-fetch');
 const LOGIN_URL = process.env.LOGIN_URL + '%3Ftscn%3D18446744073709551615';
 const LOGIN = process.env.LOGIN;
 const PASSW = process.env.PASSW;
-const IDURL = process.env.IDURL;
 const RESTMAIL = process.env.RESTMAIL; // @restmail.net (forward steam auth code emails here)
 const TOKEN = process.env.TOKEN;
 
@@ -111,10 +110,12 @@ async function bump() {
         // Delete previous comment
         console.time('delete_reply');
         try {
-            const delCommand = await page.$$eval(`.commentthread_comment_avatar a[href="${IDURL}"]`, links => {
+            const delCommand = await page.evaluate(() => {
+                const steamId3 = document.querySelector('.persona a[data-miniprofile]').dataset.miniprofile;
+                const links = document.querySelectorAll(`a.commentthread_author_link[data-miniprofile="${steamId3}"]`);
                 if (links.length < 2) return null;
                 const prevLink = links[links.length - 2];
-                const delButton = prevLink.parentNode.parentNode.querySelector('a.forum_comment_action.delete');
+                const delButton = prevLink.parentNode.querySelector('a.forum_comment_action.delete');
                 return delButton.getAttribute('href');
             });
 

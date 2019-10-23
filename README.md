@@ -4,7 +4,6 @@
  * sane install of nodejs 8 or newer
  * steam user account
     * non [limited](https://support.steampowered.com/kb_article.php?ref=3330-IAGK-7663)
-    * has a custom URL setup
     * has an email that can forward messages
  * browserless.io token
 
@@ -19,9 +18,6 @@ Example:
 The login name of the steam user.
 ##### PASSW
 The password of the steam user.
-##### IDURL
-The custom URL of the steam user.  
-Example: `https://steamcommunity.com/id/bumperbot`
 ##### RESTMAIL
 The inbox name of the restmail.net email used to receive the forwarded steam guard email.  
 Example: `bumperbot`  
