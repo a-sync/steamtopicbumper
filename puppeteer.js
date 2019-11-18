@@ -22,7 +22,7 @@ function getBrowser() {
             ],
             userDataDir: __dirname + '/userData-'+LOGIN,
             ignoreHTTPSErrors: true,
-            headless: true
+            headless: false
         });
     }
 }
