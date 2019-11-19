@@ -27,6 +27,7 @@ function getBrowser() {
     }
 }
 
+let latestCommentId = '';
 async function bump() {
     console.time('connection');
     const browser = await getBrowser();
@@ -55,7 +56,9 @@ async function bump() {
         const page = await browser.newPage();
         page.setDefaultTimeout(10000);
         await page.setUserAgent('Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/77.0.3865.90 Safari/537.36');
-        await page.goto(LOGIN_URL + '%3Ftscn%3D18446744073709551615', {waitUntil: 'load'});
+        const URL = LOGIN_URL + (latestCommentId ? encodeURIComponent(latestCommentId) : '%3Ftscn%3D18446744073709551615');
+        //latestCommentId = '';
+        await page.goto(URL, {waitUntil: 'load'});
 
         // Log in
         if (await page.$('#steamAccountName')) {
@@ -121,14 +124,29 @@ async function bump() {
         try {
             const delCommand = await page.evaluate(() => {
                 const links = document.querySelectorAll('a.forum_comment_action.delete');
-                if (links.length < 2) return false;
+
+                let lastCommentId = '';
+                if (links.length > 0) {
+                    try {
+                        const newPermlink = links[links.length - 1].closest('div.commentthread_comment').querySelector('div.forum_comment_permlink > a');
+                        lastCommentId = newPermlink.getAttribute('href');
+                    } catch (error) {}
+                }
+
+                if (links.length < 2) return {del:false,lastCommentId};
+
                 const delButton = links[links.length - 2];
                 const delFunctionString = delButton.getAttribute('href').trim().substr(11);
                 Function(delFunctionString)();
-                return true;
+                return {del:true,lastCommentId};
             });
 
-            if (delCommand) {
+            latestCommentId = delCommand.lastCommentId;
+            if (!latestCommentId) {
+                console.warn('New reply not found.');
+            }
+
+            if (delCommand.del) {
                 await page.waitForSelector('div.newmodal .btn_green_white_innerfade', {visible:true});
                 await page.click('div.newmodal .btn_green_white_innerfade');
                 await page.waitForSelector('div.newmodal', {hidden:true});
