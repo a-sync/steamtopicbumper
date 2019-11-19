@@ -120,11 +120,9 @@ async function bump() {
         console.time('delete_prev_reply');
         try {
             const delCommand = await page.evaluate(() => {
-                const steamId3 = document.querySelector('.persona a[data-miniprofile]').dataset.miniprofile;
-                const links = document.querySelectorAll(`a.commentthread_author_link[data-miniprofile="${steamId3}"]`);
+                const links = document.querySelectorAll('a.forum_comment_action.delete');
                 if (links.length < 2) return false;
-                const prevLink = links[links.length - 2];
-                const delButton = prevLink.parentNode.querySelector('a.forum_comment_action.delete');
+                const delButton = links[links.length - 2];
                 const delFunctionString = delButton.getAttribute('href').trim().substr(11);
                 Function(delFunctionString)();
                 return true;
