@@ -7,6 +7,9 @@ const PASSW = process.env.PASSW;
 const RESTMAIL = process.env.RESTMAIL; // @restmail.net (forward steam auth code emails here)
 const TOKEN = process.env.TOKEN;
 
+const STATEFILE = process.env.STATEFILE || 'state.json';
+const stateJson = require('statejson.js')(STATEFILE);
+
 function getBrowser() {
     if (TOKEN) {
         return puppeteer.connect({
@@ -26,8 +29,8 @@ function getBrowser() {
     }
 }
 
-let latestCommentId = '';
 async function bump() {
+    const STATE = stateJson.load();
     console.time('connection');
     const browser = await getBrowser();
 
@@ -35,6 +38,7 @@ async function bump() {
     let closePromise;
     const shutDown = (reason) => {
         if (closing) return closePromise;
+        stateJson.save(STATE);
         closing = true;
         if (reason) console.warn(reason);
         closePromise = browser.close().then(() => {
@@ -55,8 +59,8 @@ async function bump() {
         const page = await browser.newPage();
         page.setDefaultTimeout(10000);
         await page.setUserAgent('Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/77.0.3865.90 Safari/537.36');
-        const URL = LOGIN_URL + (latestCommentId ? encodeURIComponent(latestCommentId) : '%3Ftscn%3D18446744073709551615');
-        //latestCommentId = '';
+        const URL = LOGIN_URL + (STATE.latestCommentId ? encodeURIComponent(STATE.latestCommentId) : '%3Ftscn%3D18446744073709551615');
+        //STATE.latestCommentId = '';
         await page.goto(URL, {waitUntil: 'load'});
 
         // Log in
@@ -140,8 +144,10 @@ async function bump() {
                 return {del:true,lastCommentId};
             });
 
-            latestCommentId = delCommand.lastCommentId;
-            if (!latestCommentId) {
+            if (delCommand.latestCommentId) {
+                STATE.latestCommentId = delCommand.lastCommentId;
+            } else {
+                STATE.latestCommentId = '';
                 console.warn('New reply not found.');
             }
 
