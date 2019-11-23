@@ -1,3 +1,5 @@
+const fetch = require('node-fetch');
+
 // load the latest message from inbox
 async function loadLastFromInbox(inbox) {
     //console.debug(`Checking ${inbox}@restmail.net @ ` + String(new Date()));

@@ -1,5 +1,4 @@
 const puppeteer = require('puppeteer');
-const fetch = require('node-fetch');
 const {waitForNewMail, clearInbox} = require('./restmail.js');
 
 const LOGIN_URL = process.env.LOGIN_URL;
