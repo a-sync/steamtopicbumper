@@ -1,4 +1,5 @@
 const {bump} = require('./puppeteer.js');
+//require('dotenv').config();
 
 console.log('Starting bumper...');
 let counter = 0;
