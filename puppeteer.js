@@ -7,7 +7,7 @@ const PASSW = process.env.PASSW;
 const RESTMAIL = process.env.RESTMAIL; // @restmail.net (forward steam auth code emails here)
 const TOKEN = process.env.TOKEN;
 
-const STATEFILE = process.env.STATEFILE || 'state.json';
+const STATEFILE = process.env.STATEFILE || __dirname + 'state.json';
 const stateJson = require('statejson.js')(STATEFILE);
 
 function getBrowser() {
@@ -141,7 +141,7 @@ async function bump() {
                 const delButton = links[links.length - 2];
                 const delFunctionString = delButton.getAttribute('href').trim().substr(11);
                 Function(delFunctionString)();
-                return {del:true,lastCommentId};
+                return {del:true,lastCommentId,delFunctionString};
             });
 
             if (delCommand.latestCommentId) {
