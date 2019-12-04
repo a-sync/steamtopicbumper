@@ -2,7 +2,7 @@ const fetch = require('node-fetch');
 
 // load the latest message from inbox
 async function loadLastFromInbox(inbox) {
-    //console.debug(`Checking ${inbox}@restmail.net @ ` + String(new Date()));
+    //console.log(`Checking ${inbox}@restmail.net @ ` + String(new Date()));
     const res = await fetch('http://restmail.net/mail/'+inbox);
     const resJson = await res.json();
 
@@ -25,7 +25,7 @@ function waitForNewMail(inbox) {
         const check = () => {
             loadLastFromInbox(inbox).then(res => {
                 if (!(res instanceof Error) && res.age / 1000 < 30) {
-                    console.log('Found new mail on try nr. ' + String(i+1));
+                    //console.log('Found new mail on try nr. ' + String(i+1));
                     return resolve(res.text);
                 } else {
                     i++;
