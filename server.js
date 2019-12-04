@@ -6,10 +6,19 @@ for (const f of ['log','warn','error']) {
     console[f] = (...args) => {
         while (httpOutArray.length >= 200) httpOutArray.shift();
         httpOutArray.push(args.map(i => String(i)).join(' '));
-        events[f]++;
+        if (f!=='log') events[f]++;
         return console['_'+f](...args);
     };
 }
+
+var http = require('http');
+http.createServer(function (req, res) {
+    res.writeHead(200, {'Content-Type': 'text/plain'});
+    res.end('Events: '
+        +JSON.stringify(events,null,2).replace('"','')
+        +'\n\n'+httpOutArray.join('\n')
+    );
+}).listen(80, '0.0.0.0');
 
 const {bump} = require('./puppeteer.js');
 //require('dotenv').config();
@@ -30,9 +39,3 @@ async function run() {
 
 setInterval(run, 1000 * 60 * 60);
 run();
-
-var http = require('http');
-http.createServer(function (req, res) {
-    res.writeHead(200, {'Content-Type': 'text/plain'});
-    res.end('Events: '+JSON.stringify(events,null,2)+'\n\n'+httpOutArray.join('\n'));
-}).listen(80, '0.0.0.0');
