@@ -1,12 +1,21 @@
 const events = {bumps:0,warn:0,error:0,fail:0};
+const actions = {};
 
 const httpOutArray = [];
 for (const f of ['log','warn','error']) {
     console['_'+f] = console[f];
     console[f] = (...args) => {
-        while (httpOutArray.length >= 200) httpOutArray.shift();
+        if (args[0] === '%s: %sms') { // timeEnd call
+            args.shift();
+            if (actions[args[0]]) actions[args[0]]++;
+            else actions[args[0]] = 1;
+        }
+
         httpOutArray.push(args.map(i => String(i)).join(' '));
+        while (httpOutArray.length > 200) httpOutArray.shift();
+
         if (f!=='log') events[f]++;
+
         return console['_'+f](...args);
     };
 }
@@ -14,8 +23,8 @@ for (const f of ['log','warn','error']) {
 var http = require('http');
 http.createServer(function (req, res) {
     res.writeHead(200, {'Content-Type': 'text/plain'});
-    res.end('Events: '
-        +JSON.stringify(events,null,2).replace('"','')
+    res.end('Events: '+JSON.stringify(events,null,2).replace(/"/g,'')
+        +'Actions: '+JSON.stringify(actions,null,2).replace(/"/g,'')
         +'\n\n'+httpOutArray.join('\n')
     );
 }).listen(80, '0.0.0.0');
