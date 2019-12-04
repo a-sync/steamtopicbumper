@@ -1,8 +1,8 @@
+// Capture outputs & count events and actions
 const events = {bumps:0,warn:0,error:0,fail:0};
 const actions = {};
-
 const httpOutArray = [];
-for (const f of ['log','warn','error']) {
+for (const f of ['log', 'warn', 'error']) {
     console['_'+f] = console[f];
     console[f] = (...args) => {
         httpOutArray.push(
@@ -21,12 +21,13 @@ for (const f of ['log','warn','error']) {
         );
         while (httpOutArray.length > 200) httpOutArray.shift();
 
-        if (f!=='log') events[f]++;
+        if (f !== 'log') events[f]++;
 
         return console['_'+f](...args);
     };
 }
 
+// Serve captured data
 var http = require('http');
 http.createServer(function (req, res) {
     res.writeHead(200, {'Content-Type': 'text/plain'});
@@ -36,10 +37,9 @@ http.createServer(function (req, res) {
     );
 }).listen(80, '0.0.0.0');
 
-const {bump} = require('./puppeteer.js');
+// Run bot
 //require('dotenv').config();
-
-console.log('Starting bumper...');
+const {bump} = require('./puppeteer.js');
 
 async function run() {
     const c = ++events.bumps;
