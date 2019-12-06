@@ -28,3 +28,14 @@ Do this: Forward to bumperbot@restmail.net
 ```
 ##### TOKEN
 The browserless.io API token.
+
+## HTTP Server
+The number of events, actions and the last 200 log entries are served via http on port 80.  
+A couple of commands are available through GET requests.
+
+##### /cmd/start[/:minutes]
+Start the loop. (default interval: 60 minutes)
+
+##### /cmd/stop
+Stop the loop.
+

@@ -27,13 +27,25 @@ for (const f of ['log', 'warn', 'error']) {
     };
 }
 
-// Serve captured data
+// Serve captured data & parse command requests
 const http = require('http');
 http.createServer(function (req, res) {
+    const url = req.url.substr(1).split('/');
+    let cmdError = '';
+    if (url[0] === 'cmd') {
+        if (url[1] === 'start') {
+            let min = 60;
+            if (url[2] && Number(url[2]) > min) min = Number(url[2]);
+            cmdError = start(min);
+        }
+        else if (url[1] === 'stop') cmdError = stop();
+    }
+
     res.writeHead(200, {'Content-Type': 'text/plain'});
-    res.end('Events: '+JSON.stringify(events,null,2).replace(/"/g,'')
+    res.end(cmdError+'Events: '+JSON.stringify(events,null,2).replace(/"/g,'')
         +'\nActions: '+JSON.stringify(actions,null,2).replace(/"/g,'')
-        +'\n\n'+httpOutArray.join('\n')
+        +'\n\n ========== LOGS TAIL =========='
+        +'\n'+httpOutArray.join('\n')
     );
 }).listen(80, '0.0.0.0');
 
@@ -52,5 +64,19 @@ async function run() {
     console.log('Finished bump #' + c + ' @ ' + String(new Date()) + '\n');
 }
 
-setInterval(run, 1000 * 60 * 60);
-run();
+let loop = null;
+function start(min) {
+    if (loop) return 'Loop already started!\n\n';
+    console.log('Start loop with '+min+' minute intervals @ ' + String(new Date()) + '\n');
+    loop = setInterval(run, 1000 * 60 * min);
+    run();
+    return '';
+}
+
+function stop() {
+    if (!loop) return 'Loop already stopped!\n\n';
+    console.log('Stop loop @ ' + String(new Date()) + '\n');
+    clearInterval(loop);
+    loop = null;
+    return '';
+}
