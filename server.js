@@ -34,7 +34,7 @@ http.createServer(function (req, res) {
     let cmdError = '';
     if (url[0] === 'cmd') {
         if (url[1] === 'start') {
-            let min = 60;
+            let min = 1440;
             if (url[2] && Number(url[2]) > min) min = Number(url[2]);
             cmdError = start(min);
         }

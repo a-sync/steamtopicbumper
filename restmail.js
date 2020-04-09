@@ -24,12 +24,12 @@ function waitForNewMail(inbox) {
 
         const check = () => {
             loadLastFromInbox(inbox).then(res => {
-                if (!(res instanceof Error) && res.age / 1000 < 30) {
+                if (!(res instanceof Error) && res.age / 1000 < 90) {
                     //console.log('Found new mail on try nr. ' + String(i+1));
                     return resolve(res.text);
                 } else {
                     i++;
-                    if (i < 12) {
+                    if (i < 42) {
                         setTimeout(check, 2000);
                     } else {
                         return reject(new Error('No new message received within the time limit.'));
