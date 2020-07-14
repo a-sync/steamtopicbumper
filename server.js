@@ -1,5 +1,5 @@
 // Capture outputs & count events and actions
-const events = {bumps:0,warn:0,error:0,fail:0};
+const events = {bumps:0,warn:0,error:0};
 const actions = {};
 const httpOutArray = [];
 for (const f of ['log', 'warn', 'error']) {

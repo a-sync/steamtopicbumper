@@ -146,8 +146,8 @@ async function bump() {
             }
 
             if (delCommand.del) {
-                await page.waitForSelector('div.newmodal .btn_green_white_innerfade', {visible:true});
-                await page.click('div.newmodal .btn_green_white_innerfade');
+                await page.waitForSelector('div.newmodal .btn_green_steamui', {visible:true});
+                await page.click('div.newmodal .btn_green_steamui');
                 await page.waitForSelector('div.newmodal', {hidden:true});
             } else {
                 console.warn('Previous reply not found.');
