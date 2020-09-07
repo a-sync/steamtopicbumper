@@ -45,7 +45,7 @@ http.createServer(function (req, res) {
     res.end(cmdError+'Events: '+JSON.stringify(events,null,2).replace(/"/g,'')
         +'\nActions: '+JSON.stringify(actions,null,2).replace(/"/g,'')
         +'\n\n ========== LOGS TAIL =========='
-        +'\n'+httpOutArray.join('\n')
+        +'\n'+httpOutArray.reverse().join('\n')
     );
 }).listen(80, '0.0.0.0');
 
