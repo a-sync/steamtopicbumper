@@ -53,7 +53,7 @@ async function bump() {
         });
 
         const page = await browser.newPage();
-        page.setDefaultTimeout(10000);
+        page.setDefaultTimeout(30000);
         await page.setUserAgent('Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/77.0.3865.90 Safari/537.36');
         const URL = LOGIN_URL + (latestCommentId ? encodeURIComponent(latestCommentId) : '%3Ftscn%3D18446744073709551615');
         //latestCommentId = '';
