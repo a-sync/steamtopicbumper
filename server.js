@@ -54,14 +54,14 @@ http.createServer(function (req, res) {
 const {bump} = require('./puppeteer.js');
 async function run() {
     const c = ++events.bumps;
-    console.log('Starting bump #' + c + ' @ ' + String(new Date()));
+    console.log('Starting bump #' + c + ' @ ' + String(new Date()) + '\n');
     try {
         await bump();
     } catch (error) {
         events.fail++;
         console.error(error);
     }
-    console.log('Finished bump #' + c + ' @ ' + String(new Date()) + '\n');
+    console.log('Finished bump #' + c + ' @ ' + String(new Date()));
 }
 
 let loop = null;
