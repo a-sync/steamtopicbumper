@@ -31,9 +31,11 @@ async function bump() {
     console.time('connection');
     const browser = await getBrowser();
 
+    let autoShutDownTimer = null;
     let closing = false;
     let closePromise;
     const shutDown = (reason) => {
+        if (autoShutDownTimer) clearTimeout(autoShutDownTimer);
         if (closing) return closePromise;
         closing = true;
         if (reason) console.warn(reason);
@@ -44,6 +46,8 @@ async function bump() {
         });
         return closePromise;
     }
+
+    autoShutDownTimer = setTimeout(shutDown, 1000 * 60 * 2, 'auto shutdown after 2 minutes...');
 
     try {
         browser.on('targetdestroyed', target => {
